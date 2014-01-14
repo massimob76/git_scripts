@@ -27,10 +27,10 @@ module PivotalGitScripts
         global = !!(options[:global] || config["global"])
 
         if initials.any?
-          author_names, email_ids = extract_author_names_and_email_ids_from_config(config, initials)
+          author_names, emails = extract_author_names_and_emails_from_config(config, initials)
           authors = pair_names(author_names)
           git_config = {:name => authors,  :initials => initials.sort.join(" ")}
-          git_config[:email] = build_email(email_ids, config["email"]) unless no_email(config)
+          git_config[:email] = build_email(emails, config["email"]) unless no_email(config)
           set_git_config global,  git_config
         else
           git_config = {:name => nil,  :initials => nil}
@@ -58,9 +58,9 @@ module PivotalGitScripts
         end
 
         config = read_pairs_config
-        author_names, email_ids = extract_author_names_and_email_ids_from_config(config, current_pair_initials)
+        author_names, emails = extract_author_names_and_emails_from_config(config, current_pair_initials)
         authors = pair_names(author_names)
-        author_email = random_author_email(email_ids, config['email'])
+        author_email = random_author_email(emails)
         puts "Committing under #{author_email}"
         passthrough_args =  argv.map{|arg| "'#{arg}'"}.join(' ')
         env_variables = "GIT_AUTHOR_NAME='#{authors}' GIT_AUTHOR_EMAIL='#{author_email}' GIT_COMMITTER_NAME='#{authors}' GIT_COMMITTER_EMAIL='#{author_email}'"
@@ -161,16 +161,14 @@ BANNER
 
       def build_email(emails, config)
         if config.is_a?(Hash)
-          prefix = config['prefix'] if !config['no_solo_prefix'] or emails.size > 1
-          "#{([prefix] + emails).compact.join('+')}@#{config['domain']}"
+          "#{emails.compact.join('+')}"
         else
           config
         end
       end
 
-      def random_author_email(email_ids, config)
-        author_id = email_ids.sample
-        "#{author_id}@#{config['domain']}"
+      def random_author_email emails
+        emails.sample
       end
 
       def set_git_config(global, options)
@@ -191,13 +189,13 @@ BANNER
         puts "local:  #{local}" if local.length > 0
       end
 
-      def extract_author_names_and_email_ids_from_config(config, initials)
+      def extract_author_names_and_emails_from_config(config, initials)
         authors = read_author_info_from_config(config, initials)
         authors.sort!.uniq! # FIXME
         authors.map do |a|
-          full_name, email_id = a.split(";").map(&:strip)
-          email_id ||= full_name.split(' ').first.downcase
-          [full_name, email_id]
+          full_name, email = a.split(";").map(&:strip)
+          email ||= full_name.split(' ').first.downcase
+          [full_name, email]
         end.transpose
       end
 
