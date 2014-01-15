@@ -42,6 +42,9 @@ Create a `.pairs` config file in project root or your home folder.
 
 By default this affects the current project (.git/config).<br/>
 Use the `--global` option or add `global: true` to your `.pairs` file to set the global git configuration for all projects (~/.gitconfig).
+If using the global option remember that projects having local settings will take the precedence over global settings. Therefore if you have any set already clear them by running
+
+    git config --local --remove-section user
 
 Options are:
     -g, --global                     Modify global git options instead of local
